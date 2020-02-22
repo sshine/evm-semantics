@@ -42,8 +42,8 @@ export LUA_PATH
 
 .PHONY: all clean distclean                                                                                                      \
         deps all-deps llvm-deps haskell-deps repo-deps k-deps plugin-deps libsecp256k1 libff                                     \
-        build build-java build-specs build-node build-haskell build-llvm build-web3                                              \
-        defn java-defn specs-defn node-defn web3-defn haskell-defn llvm-defn                                                     \
+        build build-java build-specs build-symb-test build-node build-haskell build-llvm build-web3                              \
+        defn java-defn specs-defn symb-test-defn node-defn web3-defn haskell-defn llvm-defn                                      \
         split-tests                                                                                                              \
         test test-all test-conformance test-rest-conformance test-all-conformance test-slow-conformance test-failing-conformance \
         test-vm test-rest-vm test-all-vm test-bchain test-rest-bchain test-all-bchain                                            \
@@ -150,13 +150,14 @@ MAIN_MODULE    := ETHEREUM-SIMULATION
 SYNTAX_MODULE  := $(MAIN_MODULE)
 export MAIN_DEFN_FILE := driver
 
-k_files       := driver.k data.k network.k evm.k evm-types.k json.k krypto.k edsl.k evm-node.k web3.k asm.k state-loader.k serialization.k evm-imp-specs.k
+k_files       := driver.k data.k network.k evm.k evm-types.k json.k krypto.k edsl.k evm-node.k web3.k asm.k state-loader.k serialization.k evm-imp-specs.k evm-symb-testing.k
 EXTRA_K_FILES += $(MAIN_DEFN_FILE).k
 ALL_K_FILES   := $(k_files) $(EXTRA_K_FILES)
 
 llvm_dir    := $(DEFN_DIR)/llvm
 java_dir    := $(DEFN_DIR)/java
 specs_dir   := $(DEFN_DIR)/specs
+symb_test_dir := $(DEFN_DIR)/symb-test
 haskell_dir := $(DEFN_DIR)/haskell
 node_dir    := $(abspath $(DEFN_DIR)/node)
 web3_dir    := $(abspath $(DEFN_DIR)/web3)
@@ -166,13 +167,15 @@ export web3_dir
 llvm_files    := $(patsubst %, $(llvm_dir)/%, $(ALL_K_FILES))
 java_files    := $(patsubst %, $(java_dir)/%, $(ALL_K_FILES))
 specs_files   := $(patsubst %, $(specs_dir)/%, $(ALL_K_FILES))
+symb_test_files := $(patsubst %, $(symb_test_dir)/%, $(ALL_K_FILES))
 haskell_files := $(patsubst %, $(haskell_dir)/%, $(ALL_K_FILES))
 node_files    := $(patsubst %, $(node_dir)/%, $(ALL_K_FILES))
 web3_files    := $(patsubst %, $(web3_dir)/%, $(ALL_K_FILES))
-defn_files    := $(llvm_files) $(java_files) $(specs_files) $(haskell_files) $(node_files) $(web3_files)
+defn_files    := $(llvm_files) $(java_files) $(specs_files) $(symb_test_files) $(haskell_files) $(node_files) $(web3_files)
 
 java_kompiled    := $(java_dir)/$(MAIN_DEFN_FILE)-kompiled/timestamp
 specs_kompiled   := $(specs_dir)/specs-kompiled/timestamp
+symb_test_kompiled := $(symb_test_dir)/symb-test-kompiled/timestamp
 node_kompiled    := $(DEFN_DIR)/vm/kevm-vm
 web3_kompiled    := $(web3_dir)/build/kevm-client
 haskell_kompiled := $(haskell_dir)/$(MAIN_DEFN_FILE)-kompiled/definition.kore
@@ -192,6 +195,7 @@ defn: $(defn_files)
 llvm-defn:    $(llvm_files)
 java-defn:    $(java_files)
 specs-defn:   $(specs_files)
+symb-test-defn: $(symb_test_files)
 haskell-defn: $(haskell_files)
 node-defn:    $(node_files)
 web3-defn:    $(web3_files)
@@ -208,6 +212,10 @@ $(specs_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(specs_dir)
 	pandoc --from markdown --to "$(TANGLER)" --metadata=code:"$(java_tangle)" $< > $@
 
+$(symb_test_dir)/%.k: %.md $(TANGLER)
+	@mkdir -p $(symb_test_dir)
+	pandoc --from markdown --to "$(TANGLER)" --metadata=code:"$(java_tangle)" $< > $@
+
 $(haskell_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(haskell_dir)
 	pandoc --from markdown --to "$(TANGLER)" --metadata=code:"$(haskell_tangle)" $< > $@
@@ -222,9 +230,10 @@ $(web3_dir)/%.k: %.md $(TANGLER)
 
 # Kompiling
 
-build: build-llvm build-haskell build-java build-specs build-web3 build-node
+build: build-llvm build-haskell build-java build-specs build-symb-test build-web3 build-node
 build-java:    $(java_kompiled)
 build-specs:   $(specs_kompiled)
+build-symb-test: $(symb_test_kompiled)
 build-node:    $(node_kompiled)
 build-web3:    $(web3_kompiled)
 build-haskell: $(haskell_kompiled)
@@ -248,6 +257,18 @@ $(specs_kompiled): $(specs_files)
 	kompile --debug --main-module $(MAIN_MODULE) --backend java \
 	        --syntax-module $(SYNTAX_MODULE) $(specs_dir)/$(MAIN_DEFN_FILE).k \
 	        --directory $(specs_dir) -I $(specs_dir) \
+	        $(KOMPILE_OPTS)
+
+# Solidity symbolic testing extension
+
+$(symb_test_kompiled): MAIN_DEFN_FILE=evm-symb-testing
+$(symb_test_kompiled): MAIN_MODULE=EVM-SYMB-TESTING
+$(symb_test_kompiled): SYNTAX_MODULE=EVM-SYMB-TESTING
+
+$(symb_test_kompiled): $(symb_test_files)
+	kompile --debug --main-module $(MAIN_MODULE) --backend haskell \
+	        --syntax-module $(SYNTAX_MODULE) $(symb_test_dir)/$(MAIN_DEFN_FILE).k \
+	        --directory $(symb_test_dir) -I $(symb_test_dir) \
 	        $(KOMPILE_OPTS)
 
 # Haskell Backend
