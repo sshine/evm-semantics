@@ -30,7 +30,7 @@ module EVM-SYMB-TESTING
     syntax EthereumCommand ::= "#loadTesterBytecode"
                              | "#loadERC20Bytecode" Int
                              | "#loadBytecode" Int ByteArray
-    rule <k> #loadTesterBytecode => #loadBytecode ?ACCT CODE ...</k>
+    rule <k> #loadTesterBytecode => #loadBytecode ?ACCT:Int CODE ...</k>
          <testerBytecode> CODE </testerBytecode>
          <testerAcctId> _ => ?ACCT </testerAcctId>
 
@@ -104,8 +104,8 @@ module EVM-SYMB-TESTING
 
     syntax EthereumCommand ::= "#runTestApprove"
                              | "#runTestApproveAux"
-    //todo error: evaluation of Map.lookup resulted in Bottom.
-    rule <k> #runTestApprove => #loadTesterBytecode ~> #runTestApproveAux ...</k>
+
+    rule <k> #runTestApprove => #loadTesterBytecode ~> #runTestApproveAux ~> success ...</k>
     rule <k> #runTestApproveAux => #mkCallShortcut 0 TESTER_ACCT #abiCallData("test_approve", .TypedArgs) ...</k>
          <testerAcctId> TESTER_ACCT </testerAcctId>
 
