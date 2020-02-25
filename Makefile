@@ -343,6 +343,7 @@ TEST_SYMBOLIC_BACKEND := java
 
 TEST         := ./kevm
 TEST_OPTIONS :=
+K_OPTIONS 	 :=
 CHECK        := git --no-pager diff --no-index --ignore-all-space -R
 
 KEVM_MODE     := NORMAL
@@ -388,6 +389,13 @@ tests/%.run-expected: tests/% tests/%.expected
 	    $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out                                                                     \
 	    || $(CHECK) tests/$*.$(TEST_CONCRETE_BACKEND)-out tests/$*.expected
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
+
+tests/symb-test/%.run: TEST_SYMBOLIC_BACKEND=haskell
+tests/symb-test/%.run: tests/symb-test/%
+	MODE=$(KEVM_MODE) SCHEDULE=$(KEVM_SCHEDULE) CHAINID=$(KEVM_CHAINID)
+	$(TEST) run $(TEST_OPTIONS) \
+		--backend $(TEST_SYMBOLIC_BACKEND) --backend-dir $(symb_test_dir) $< $(K_OPTIONS)
+	rm -rf $@.out
 
 tests/web3/no-shutdown/%: KEVM_WEB3_ARGS=
 
