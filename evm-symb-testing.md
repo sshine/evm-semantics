@@ -30,8 +30,11 @@ module EVM-SYMB-TESTING
                              | "#loadERC20Bytecode" Int
                              | "#loadBytecode" Int ByteArray
     rule <k> #loadTesterBytecode => #loadBytecode ?ACCT:Int CODE ...</k>
+         <schedule> SCHED </schedule>
          <testerBytecode> CODE </testerBytecode>
          <testerAcctId> _ => ?ACCT </testerAcctId>
+      ensures #rangeAddress(?ACCT)
+      andBool notBool ?ACCT in #precompiledAccounts(SCHED)
 
     rule <k> #loadERC20Bytecode ACCT => #loadBytecode ACCT CODE ...</k>
          <erc20Bytecode> CODE </erc20Bytecode>
@@ -107,6 +110,17 @@ module EVM-SYMB-TESTING
     rule <k> #runTestApprove => #loadTesterBytecode ~> #runTestApproveAux ~> success ...</k>
     rule <k> #runTestApproveAux => #mkCallShortcut 0 TESTER_ACCT #abiCallData("test_approve", .TypedArgs) ...</k>
          <testerAcctId> TESTER_ACCT </testerAcctId>
+
+
+    // lemmas
+    rule N &Int maxUInt160 => N
+      requires #rangeUInt(160, N) [simplification]
+
+    rule maxUInt160 &Int N => N
+      requires #rangeUInt(160, N) [simplification]
+
+    rule N modInt pow160 => N
+      requires #rangeUInt(160, N) [simplification]
 
 endmodule
 ```
