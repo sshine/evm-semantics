@@ -17,7 +17,7 @@ module DEMOSYMBTEST-SPEC
         <statusCode> _ => ?_ </statusCode>
         <callStack> _ </callStack>
         <interimStates> _ </interimStates>
-        <touchedAccounts> _ => ?_ </touchedAccounts>
+        <touchedAccounts> .Set => ?_ </touchedAccounts>
 
         <callState>
           <program> .ByteArray </program>
