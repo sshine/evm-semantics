@@ -35,6 +35,8 @@ module EVM-SYMB-TESTING
          <testerAcctId> _ => ?ACCT </testerAcctId>
       ensures #rangeAddress(?ACCT)
       andBool notBool ?ACCT in #precompiledAccounts(SCHED)
+      //otherwise <touchedAccounts> gets undefined
+      andBool notBool ?ACCT ==K 0
 
     rule <k> #loadERC20Bytecode ACCT => #loadBytecode ACCT CODE ...</k>
          <erc20Bytecode> CODE </erc20Bytecode>
