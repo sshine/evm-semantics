@@ -110,7 +110,7 @@ module EVM-SYMB-TESTING
     syntax EthereumCommand ::= "#runTestApprove"
                              | "#runTestApproveAux"
 
-    rule <k> #runTestApprove => #loadTesterBytecode ~> #runTestApproveAux ~> success ...</k>
+    rule <k> #runTestApprove => #loadTesterBytecode ~> #runTestApproveAux ~> failure "" ...</k>
     rule <k> #runTestApproveAux => #mkCallShortcut 0 TESTER_ACCT #abiCallData("test_approve", .TypedArgs) ...</k>
          <testerAcctId> TESTER_ACCT </testerAcctId>
 
