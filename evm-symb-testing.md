@@ -57,12 +57,15 @@ module EVM-SYMB-TESTING
     //Implementation of new_ERC20_with_arbitrary_storage() returns address
     rule <k> CALL _ ACCTTO 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
           => #assume #rangeAddress(?ACCT:Int)
+          //~> #assume #unfold( notBool ?ACCT in ActiveAccts ) //todo doesn't work
+          ~> #assume #notIn(?ACCT, ActiveAccts)                //todo still doesn't work
           ~> #loadERC20Bytecode ?ACCT
           ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?ACCT)
          ...
          </k>
          <localMem> LM </localMem>
          <testerAcctId> ACCTTO </testerAcctId>
+         <activeAccounts> ActiveAccts </activeAccounts>
       requires #range(LM, ARGSTART, ARGWIDTH) ==K #abiCallData("new_ERC20_with_arbitrary_storage", .TypedArgs)
 
     //Implementation of create_symbolic_address() returns address
@@ -124,6 +127,16 @@ module EVM-SYMB-TESTING
 
     rule N modInt pow160 => N
       requires #rangeUInt(160, N) [simplification]
+
+    //hack to process constraints of type notBool X in Set.
+    //Is this really a functional.
+    syntax Bool ::= #unfold( Bool ) [function, functional]
+    rule #unfold ( notBool X in SetItem(A) S:Set ) => X =/=K A andBool #unfold ( notBool X in S ) [simplification]
+    rule #unfold ( notBool X in .Set ) => true                                                    [simplification]
+
+    syntax Bool ::= #notIn( K, Set ) [function, functional]
+    rule #notIn(X, SetItem(A) S:Set) => X =/=K A andBool #notIn(X, S)
+    rule #notIn(X, .Set) => true
 
 endmodule
 ```
