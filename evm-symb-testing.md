@@ -58,7 +58,7 @@ module EVM-SYMB-TESTING
     rule <k> CALL _ ACCTTO 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
           => #assume #rangeAddress(?ACCT:Int)
           //~> #assume #unfold( notBool ?ACCT in ActiveAccts ) //todo doesn't work
-          ~> #assume #notIn(?ACCT, ActiveAccts)                //todo still doesn't work
+          ~> #assume #notInAcctList(?ACCT, Set2List(ActiveAccts)) //todo still doesn't work
           ~> #loadERC20Bytecode ?ACCT
           ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?ACCT)
          ...
@@ -134,9 +134,9 @@ module EVM-SYMB-TESTING
     rule #unfold ( notBool X in SetItem(A) S:Set ) => X =/=K A andBool #unfold ( notBool X in S ) [simplification]
     rule #unfold ( notBool X in .Set ) => true                                                    [simplification]
 
-    syntax Bool ::= #notIn( K, Set ) [function, functional]
-    rule #notIn(X, SetItem(A) S:Set) => X =/=K A andBool #notIn(X, S)
-    rule #notIn(X, .Set) => true
+    syntax Bool ::= #notInAcctList( Int, List ) [function, functional]
+    rule #notInAcctList(X, ListItem(H:Int) TAIL:List) => X =/=Int H andBool #notInAcctList(X, TAIL)
+    rule #notInAcctList(X, .List) => true
 
 endmodule
 ```
