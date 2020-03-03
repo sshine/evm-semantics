@@ -85,10 +85,11 @@ module EVM-SYMB-TESTING
          <testerAcctId> ACCTTO </testerAcctId>
       requires #range(LM, ARGSTART, ARGWIDTH) ==K #abiCallData("create_symbolic_uint256", .TypedArgs)
 
-    syntax Set ::= "#customFunctionAbis" [function]
-    rule #customFunctionAbis => SetItem(#abiCallData("new_ERC20_with_arbitrary_storage", .TypedArgs))
-                                SetItem(#abiCallData("create_symbolic_address", .TypedArgs))
-                                SetItem(#abiCallData("create_symbolic_uint256", .TypedArgs))
+    syntax Set ::= "#customFunctionAbis" [function, functional]
+    //todo #asInteger wrapper is workaround until Haskell implements `bytes equals bytes` hook
+    rule #customFunctionAbis => SetItem(#asInteger(#abiCallData("new_ERC20_with_arbitrary_storage", .TypedArgs)))
+                                SetItem(#asInteger(#abiCallData("create_symbolic_address", .TypedArgs)))
+                                SetItem(#asInteger(#abiCallData("create_symbolic_uint256", .TypedArgs)))
 
     //todo temporary hack untin we get priorities working
     rule <k> CALL GCAP ACCTTO VALUE ARGSTART ARGWIDTH RETSTART RETWIDTH
@@ -100,7 +101,7 @@ module EVM-SYMB-TESTING
          <schedule> SCHED </schedule>
          <id> ACCTFROM </id>
          <localMem> LM </localMem>
-      requires notBool ( #range(LM, ARGSTART, ARGWIDTH) in #customFunctionAbis )
+      requires notBool ( #asInteger(#range(LM, ARGSTART, ARGWIDTH)) in #customFunctionAbis )
 
     syntax EthereumCommand ::= "#assume" Bool
     rule <k> #assume B => . ...</k>
