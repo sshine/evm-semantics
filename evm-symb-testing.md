@@ -57,8 +57,8 @@ module EVM-SYMB-TESTING
     //Implementation of new_ERC20_with_arbitrary_storage() returns address
     rule <k> CALL _ ACCTTO 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
           => #assume #rangeAddress(?ACCT:Int)
-          //~> #assume #unfold( notBool ?ACCT in ActiveAccts ) //todo doesn't work
-          ~> #assume #notInAcctList(?ACCT, Set2List(ActiveAccts)) //todo still doesn't work
+          //~> #assume notBool ?ACCT in ActiveAccts //Will work once "in" for symbolic LHS gets implemented.
+          ~> #assumeNotIn(?ACCT, ActiveAccts) //Works modulo issue: https://github.com/kframework/kore/issues/1637
           ~> #loadERC20Bytecode ?ACCT
           ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?ACCT)
          ...
@@ -137,6 +137,10 @@ module EVM-SYMB-TESTING
     syntax Bool ::= #notInAcctList( Int, List ) [function, functional]
     rule #notInAcctList(X, ListItem(H:Int) TAIL:List) => X =/=Int H andBool #notInAcctList(X, TAIL)
     rule #notInAcctList(X, .List) => true
+
+    syntax KItem ::= #assumeNotIn( Int, Set )
+    rule <k> #assumeNotIn(X, SetItem(H) REST) => #assume X =/=Int H ~> #assumeNotIn(X, REST) ...</k>
+    rule <k> #assumeNotIn(X, .Set) => . ...</k>
 
 endmodule
 ```
