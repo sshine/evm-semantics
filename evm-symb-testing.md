@@ -63,6 +63,7 @@ module EVM-SYMB-TESTING
           ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?ACCT)
          ...
          </k>
+         <output> _ => #buf(32, ?ACCT) </output>
          <localMem> LM </localMem>
          <testerAcctId> ACCTTO </testerAcctId>
          <activeAccounts> ActiveAccts </activeAccounts>
@@ -74,6 +75,7 @@ module EVM-SYMB-TESTING
           ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?ACCT)
          ...
          </k>
+         <output> _ => #buf(32, ?ACCT) </output>
          <localMem> LM </localMem>
          <testerAcctId> ACCTTO </testerAcctId>
       requires #range(LM, ARGSTART, ARGWIDTH) ==K #abiCallData("create_symbolic_address", .TypedArgs)
@@ -84,6 +86,7 @@ module EVM-SYMB-TESTING
           ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?SYMB_INT)
          ...
          </k>
+         <output> _ => #buf(32, ?SYMB_INT) </output>
          <localMem> LM </localMem>
          <testerAcctId> ACCTTO </testerAcctId>
       requires #range(LM, ARGSTART, ARGWIDTH) ==K #abiCallData("create_symbolic_uint256", .TypedArgs)
