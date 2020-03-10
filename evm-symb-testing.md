@@ -60,7 +60,7 @@ module EVM-SYMB-TESTING
           //~> #assume notBool ?ACCT in ActiveAccts //Will work once "in" for symbolic LHS gets implemented.
           ~> #assumeNotIn(?ACCT, ActiveAccts) //Works modulo issue: https://github.com/kframework/kore/issues/1637
           ~> #loadERC20Bytecode ?ACCT
-          ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?ACCT)
+          ~> 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?ACCT)
          ...
          </k>
          <output> _ => #buf(32, ?ACCT) </output>
@@ -72,7 +72,7 @@ module EVM-SYMB-TESTING
     //Implementation of create_symbolic_address() returns address
     rule <k> CALL _ ACCTTO 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
           => #assume #rangeAddress(?ACCT:Int)
-          ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?ACCT)
+          ~> 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?ACCT)
          ...
          </k>
          <output> _ => #buf(32, ?ACCT) </output>
@@ -83,7 +83,7 @@ module EVM-SYMB-TESTING
     //Implementation of create_symbolic_uint256() returns address
     rule <k> CALL _ ACCTTO 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
           => #assume #rangeUInt(256, ?SYMB_INT:Int)
-          ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?SYMB_INT)
+          ~> 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?SYMB_INT)
          ...
          </k>
          <output> _ => #buf(32, ?SYMB_INT) </output>
