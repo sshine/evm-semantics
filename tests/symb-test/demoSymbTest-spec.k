@@ -7,7 +7,7 @@ module DEMOSYMBTEST-SPEC
   <kevm-specs>
     <kevm>
     <k> #runTestApprove => . </k>
-    <exit-code> _ => 0 </exit-code>
+    <exit-code> _ => ?_ </exit-code>
     <mode> NORMAL </mode>
     <schedule> ISTANBUL </schedule>
 
