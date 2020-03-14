@@ -25,8 +25,9 @@ contract SymbolicTestDemo is SymbolicTestBuiltins {
         address spender = SymbolicTestBuiltins(this).create_symbolic_address();
         uint256 value   = SymbolicTestBuiltins(this).create_symbolic_uint256();
         bool success = token.approve(spender, value);
-        if (success) {
-             assert( token.allowance(address(this), spender) == value );
-        }
+        //bool success = token.approve(address(0), 0); //works
+        //if (success) {
+        //     assert( token.allowance(address(this), spender) == value );
+        //}
     }
 }

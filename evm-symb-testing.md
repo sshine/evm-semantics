@@ -106,7 +106,9 @@ module EVM-SYMB-TESTING
          <schedule> SCHED </schedule>
          <id> ACCTFROM </id>
          <localMem> LM </localMem>
-      requires notBool ( #range(LM, ARGSTART, ARGWIDTH) in #customFunctionAbis )
+      //todo not evaluated because of https://github.com/kframework/kore/issues/1672
+      //requires notBool ( #range(LM, ARGSTART, ARGWIDTH) #in #customFunctionAbis )
+      requires #notInByteArrayList(#range(LM, ARGSTART, ARGWIDTH), Set2List(#customFunctionAbis) )
 
     syntax EthereumCommand ::= "#assume" Bool
     rule <k> #assume B => . ...</k>
@@ -130,19 +132,29 @@ module EVM-SYMB-TESTING
     rule N modInt pow160 => N
       requires #rangeUInt(160, N) [simplification]
 
-    //hack to process constraints of type notBool X in Set.
-    //Is this really a functional.
-    syntax Bool ::= #unfold( Bool ) [function, functional]
-    rule #unfold ( notBool X in SetItem(A) S:Set ) => X =/=K A andBool #unfold ( notBool X in S ) [simplification]
-    rule #unfold ( notBool X in .Set ) => true                                                    [simplification]
+    //todo #in is workaround in case set in operation doesn't work properly. Has no effect, could be "in".
+    syntax Bool ::= KItem "#in" Set                                                        [function, functional]
+    rule X #in SetItem(A) => X ==K A                                                       [simplification]
+    rule X #in SetItem(A) SetItem(B) S:Set => X #in SetItem(A) orBool X #in (SetItem(B) S) [simplification]
+    rule X #in .Set => false                                                               [simplification]
 
-    syntax Bool ::= #notInAcctList( Int, List ) [function, functional]
-    rule #notInAcctList(X, ListItem(H:Int) TAIL:List) => X =/=Int H andBool #notInAcctList(X, TAIL)
-    rule #notInAcctList(X, .List) => true
+    syntax Bool ::= #notInByteArrayList( ByteArray, List ) [function, functional]
+    //Cannot rewrite to X =/=K H - custom lemmas for equality don't work.
+    //rule #notInByteArrayList(X, ListItem(H:ByteArray) TAIL:List) => X =/=K H andBool #notInByteArrayList(X, TAIL)
+    rule #notInByteArrayList(X, ListItem(H:ByteArray) TAIL:List) => #notEq(X, H) andBool #notInByteArrayList(X, TAIL)
+    rule #notInByteArrayList(X, .List) => true
 
     syntax KItem ::= #assumeNotIn( Int, Set )
     rule <k> #assumeNotIn(X, SetItem(H) REST) => #assume X =/=Int H ~> #assumeNotIn(X, REST) ...</k>
     rule <k> #assumeNotIn(X, .Set) => . ...</k>
+
+    //Possibly required, but after this issue: https://github.com/kframework/kore/issues/1672
+    rule _ ++ #buf(LEN , _) ==K BA => false
+      requires #sizeByteArray(BA) <Int LEN       [simplification]
+
+    syntax Bool ::= #notEq(ByteArray, ByteArray) [function]
+    rule #notEq(_ ++ #buf(LEN , _), BA) => true
+      requires #sizeByteArray(BA) <Int LEN
 
 endmodule
 ```
