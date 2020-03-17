@@ -15,8 +15,10 @@ module DEMOSYMBTEST-SPEC
       <evm>
         <output> _ => ?_ </output>
         <statusCode> _ => ?_ </statusCode>
-        <callStack> _ </callStack>
-        <interimStates> _ </interimStates>
+        //<callStack> _ </callStack> //todo this version doesn't work: https://github.com/kframework/kore/issues/1677
+        //<callStack> _:List </callStack> //Also doesn't work
+        <callStack> .List </callStack> //This version works
+        <interimStates> .List </interimStates> //Same limitations as for <callStack>
         <touchedAccounts> .Set => ?_ </touchedAccounts>
 
         <callState>
