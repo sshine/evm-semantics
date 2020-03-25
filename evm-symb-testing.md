@@ -44,6 +44,7 @@ module EVM-SYMB-TESTING
           => <account>
                <acctID> ACCT </acctID>
                <code> CODE </code>
+              //todo <storage> has to contain `?_` Now it's much more restrictive .Map. Fix when performance is sorted out. 
                ...
              </account>
            )
@@ -177,6 +178,8 @@ module EVM-SYMB-TESTING
 
     //todo workaround for Haskell limitation
     rule [#lookup.hack]: #lookup( (KEY |-> VAL)  , KEY ) => VAL [simplification]
+
+    rule _ in_keys(.Map) => false [simplification]
 
 endmodule
 ```
