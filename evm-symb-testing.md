@@ -181,5 +181,20 @@ module EVM-SYMB-TESTING
 
     rule _ in_keys(.Map) => false [simplification]
 
+    //todo Workaround until we get custom ==K support. Until then we'll wrap equality that needs custom simplification into #eq
+    rule ELEM in_keys((KEY |-> _) M) => #eq(ELEM, KEY) orBool (ELEM in_keys(M))
+
+    syntax Bool ::= #eq(KItem, KItem)           [function, functional]
+    rule #eq(A, B) => A ==K B                   [concrete]
+    rule #eq(A, B) => true
+      requires A ==K B                          [simplification]
+    rule #eq(A, B) => false
+      requires A =/=K B                         [simplification]
+    rule #eq(keccak(A), keccak(B)) => #eq(A, B) [simplification]
+    rule #eq(#buf(N, A) ++ BUF1, #buf(N, B) ++ BUF2) => #eq(#buf(N, A), #buf(N, B)) andBool #eq(BUF1, BUF2) [simplification]
+    rule #eq(#buf(SIZE, DATA1), #buf(SIZE, DATA2)) => #eq(DATA1, DATA2)                                     [simplification]
+      //didn't check if works but disabling for now.
+      //requires #range(0 <= DATA1 < (2 ^Int (SIZE *Int 8))) andBool #range(0 <= DATA2 < (2 ^Int (SIZE *Int 8)))
+
 endmodule
 ```
