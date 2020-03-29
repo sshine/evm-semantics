@@ -57,8 +57,10 @@ module EVM-SYMB-TESTING
 
     //Implementation of new_ERC20_with_arbitrary_storage() returns address
     rule <k> CALL _ TESTER_ACCT 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
-          //~> #assume notBool ?ACCT in ActiveAccts //Will work once "in" for symbolic LHS gets implemented.
-          => #assumeNotIn(?ACCT, ActiveAccts) //Works modulo issue: https://github.com/kframework/kore/issues/1637
+          //=> #assume notBool ?ACCT in ActiveAccts //Intended version. Doesn't work even after this fix: https://github.com/kframework/kore/issues/1183
+          //=> #assume notBool ?ACCT #in (ActiveAccts) //todo also doesn't work: https://github.com/kframework/kore/issues/1183#issuecomment-605658108
+          //=> #assume notBool ?ACCT #in Set2List(ActiveAccts) //todo also doesn't work
+          => #assumeNotIn(?ACCT, ActiveAccts) //Only version that works
           ~> #loadERC20Bytecode ?ACCT
           ~> 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?ACCT)
          ...
@@ -105,7 +107,7 @@ module EVM-SYMB-TESTING
     syntax Bool ::= Bytes2Bool( ByteArray ) [function]
     rule Bytes2Bool(#buf(32, 0)) => false
     rule Bytes2Bool(#buf(32, 1)) => true
-    //fixme lemma for actual symbolic form
+    //todo lemma for actual symbolic form
 
     syntax Set ::= "#customFunctionAbis" [function, functional]
     rule #customFunctionAbis => SetItem(#signatureCallData("assume", #bool(0), .TypedArgs)) //Argument of #bool(?_) is not used.
@@ -123,9 +125,7 @@ module EVM-SYMB-TESTING
          <schedule> SCHED </schedule>
          <id> ACCTFROM </id>
          <localMem> LM </localMem>
-      //todo not evaluated because of https://github.com/kframework/kore/issues/1672
-      //requires notBool ( #range(LM, ARGSTART, ARGWIDTH) #in #customFunctionAbis )
-      requires #notInByteArrayList(#range(LM, ARGSTART, ARGWIDTH)[0 .. 4], Set2List(#customFunctionAbis) )
+      requires notBool ( #range(LM, ARGSTART, ARGWIDTH)[0 .. 4] in #customFunctionAbis )
 
     syntax EthereumCommand ::= "#assume" Bool
     rule <k> #assume B => . ...</k>
@@ -149,17 +149,16 @@ module EVM-SYMB-TESTING
     rule N modInt pow160 => N
       requires #rangeUInt(160, N) [simplification]
 
-    //todo #in is workaround in case set in operation doesn't work properly. Has no effect, could be "in".
+    //todo when this version works, it will be possible to replace it with simplification rules (below) for regular "in"
     syntax Bool ::= KItem "#in" Set                                                        [function, functional]
-    rule X #in SetItem(A) => X ==K A                                                       [simplification]
-    rule X #in SetItem(A) SetItem(B) S:Set => X #in SetItem(A) orBool X #in (SetItem(B) S) [simplification]
+    rule X #in SetItem(A) S:Set => X ==K A orBool X #in S                                  [simplification]
     rule X #in .Set => false                                                               [simplification]
 
-    syntax Bool ::= #notInByteArrayList( ByteArray, List ) [function, functional]
-    //Cannot rewrite to X =/=K H - custom lemmas for equality don't work.
-    //rule #notInByteArrayList(X, ListItem(H:ByteArray) TAIL:List) => X =/=K H andBool #notInByteArrayList(X, TAIL)
-    rule #notInByteArrayList(X, ListItem(H:ByteArray) TAIL:List) => #notEq(X, H) andBool #notInByteArrayList(X, TAIL)
-    rule #notInByteArrayList(X, .List) => true
+    syntax Bool ::= KItem "#in" List                                                       [function, functional]
+    rule X #in ListItem(A) L:List => X ==K A orBool X #in L                                [simplification]
+    rule X #in .List => false                                                              [simplification]
+
+    rule X in SetItem(A) S:Set => X ==K A orBool X in S                                    [simplification, symbolic(S)]
 
     syntax KItem ::= #assumeNotIn( Int, Set )
     rule <k> #assumeNotIn(X, SetItem(H) REST) => #assume X =/=Int H ~> #assumeNotIn(X, REST) ...</k>
