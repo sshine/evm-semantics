@@ -181,7 +181,7 @@ module EVM-SYMB-TESTING
     rule _ in_keys(.Map) => false [simplification]
 
     //todo Workaround until we get custom ==K support. Until then we'll wrap equality that needs custom simplification into #eq
-    rule ELEM in_keys((KEY |-> _) M) => #eq(ELEM, KEY) orBool (ELEM in_keys(M))
+    rule ELEM in_keys((KEY |-> _) M) => #eq(ELEM, KEY) orBool (ELEM in_keys(M)) [simplification]
 
     syntax Bool ::= #eq(KItem, KItem)           [function, functional]
     rule #eq(A, B) => A ==K B                   [concrete]
