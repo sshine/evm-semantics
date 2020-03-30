@@ -58,9 +58,7 @@ module EVM-SYMB-TESTING
     //Implementation of new_ERC20_with_arbitrary_storage() returns address
     rule <k> CALL _ TESTER_ACCT 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
           //=> #assume notBool ?ACCT in ActiveAccts //Intended version. Doesn't work even after this fix: https://github.com/kframework/kore/issues/1183
-          //=> #assume notBool ?ACCT #in (ActiveAccts) //todo also doesn't work: https://github.com/kframework/kore/issues/1183#issuecomment-605658108
-          //=> #assume notBool ?ACCT #in Set2List(ActiveAccts) //todo also doesn't work
-          => #assumeNotIn(?ACCT, ActiveAccts) //Only version that works
+          => #assume notBool ?ACCT #in ActiveAccts
           ~> #loadERC20Bytecode ?ACCT
           ~> 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?ACCT)
          ...
@@ -154,15 +152,8 @@ module EVM-SYMB-TESTING
     rule X #in SetItem(A) S:Set => X ==K A orBool X #in S                                  [simplification]
     rule X #in .Set => false                                                               [simplification]
 
-    syntax Bool ::= KItem "#in" List                                                       [function, functional]
-    rule X #in ListItem(A) L:List => X ==K A orBool X #in L                                [simplification]
-    rule X #in .List => false                                                              [simplification]
-
-    rule X in SetItem(A) S:Set => X ==K A orBool X in S                                    [simplification, symbolic(S)]
-
-    syntax KItem ::= #assumeNotIn( Int, Set )
-    rule <k> #assumeNotIn(X, SetItem(H) REST) => #assume X =/=Int H ~> #assumeNotIn(X, REST) ...</k>
-    rule <k> #assumeNotIn(X, .Set) => . ...</k>
+    //todo try rewriting in to #in
+    rule X in ((SetItem(A) REST:Set) #as S) => X ==K A orBool X in REST                    [simplification, symbolic(S)]
 
     //Possibly required, but after this issue: https://github.com/kframework/kore/issues/1672
     rule _ ++ #buf(LEN , _) ==K BA => false
