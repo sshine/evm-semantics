@@ -30,18 +30,14 @@ module EVM-SYMB-TESTING
                              | "#loadERC20Bytecode" Int
                              | "#loadBytecode" Int ByteArray
     rule <k> #loadTesterBytecode => #loadBytecode ?ACCT:Int CODE ...</k>
-         <schedule> SCHED </schedule>
          <testerBytecode> CODE </testerBytecode>
          <testerAcctId> _ => ?ACCT </testerAcctId>
-      ensures #rangeAddress(?ACCT)
-      andBool notBool ?ACCT in #precompiledAccounts(SCHED)
-      //otherwise <touchedAccounts> gets undefined
-      andBool notBool ?ACCT ==K 0
 
     rule <k> #loadERC20Bytecode ACCT => #loadBytecode ACCT CODE ...</k>
          <erc20Bytecode> CODE </erc20Bytecode>
 
     rule <k> #loadBytecode ACCT CODE => . ...</k>
+         <schedule> SCHED </schedule>
          <activeAccounts> ACCTS:Set (.Set => SetItem(ACCT)) </activeAccounts>
          <accounts>
            ( .Bag
@@ -53,12 +49,15 @@ module EVM-SYMB-TESTING
            )
            ...
          </accounts>
+      ensures #rangeAddress(ACCT)
+      andBool notBool ACCT in #precompiledAccounts(SCHED)
+      //otherwise <touchedAccounts> gets undefined
+      andBool notBool ACCT ==K 0
 
     //Implementation of new_ERC20_with_arbitrary_storage() returns address
     rule <k> CALL _ ACCTTO 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
-          => #assume #rangeAddress(?ACCT:Int)
           //~> #assume notBool ?ACCT in ActiveAccts //Will work once "in" for symbolic LHS gets implemented.
-          ~> #assumeNotIn(?ACCT, ActiveAccts) //Works modulo issue: https://github.com/kframework/kore/issues/1637
+          => #assumeNotIn(?ACCT, ActiveAccts) //Works modulo issue: https://github.com/kframework/kore/issues/1637
           ~> #loadERC20Bytecode ?ACCT
           ~> 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?ACCT)
          ...
@@ -152,9 +151,12 @@ module EVM-SYMB-TESTING
     rule _ ++ #buf(LEN , _) ==K BA => false
       requires #sizeByteArray(BA) <Int LEN       [simplification]
 
-    syntax Bool ::= #notEq(ByteArray, ByteArray) [function]
+    syntax Bool ::= #notEq(ByteArray, ByteArray) [function, functional]
+    rule #notEq(BA1, BA2) => BA1 =/=K BA2        [concrete]
+    rule #notEq(BA, BA) => false
+
     rule #notEq(_ ++ #buf(LEN , _), BA) => true
-      requires #sizeByteArray(BA) <Int LEN
+      requires #sizeByteArray(BA) <Int LEN       [simplification]
 
 endmodule
 ```
