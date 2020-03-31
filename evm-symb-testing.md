@@ -68,6 +68,7 @@ module EVM-SYMB-TESTING
          <testerAcctId> TESTER_ACCT </testerAcctId>
          <activeAccounts> ActiveAccts </activeAccounts>
       requires #range(LM, ARGSTART, ARGWIDTH) ==K #abiCallData("new_ERC20_with_arbitrary_storage", .TypedArgs)
+      [priority(40)] //Higher than normal
 
     //Implementation of create_symbolic_address() returns address
     rule <k> CALL _ TESTER_ACCT 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
@@ -79,6 +80,7 @@ module EVM-SYMB-TESTING
          <localMem> LM </localMem>
          <testerAcctId> TESTER_ACCT </testerAcctId>
       requires #range(LM, ARGSTART, ARGWIDTH) ==K #abiCallData("create_symbolic_address", .TypedArgs)
+      [priority(40)]
 
     //Implementation of create_symbolic_uint256() returns address
     rule <k> CALL _ TESTER_ACCT 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
@@ -90,6 +92,7 @@ module EVM-SYMB-TESTING
          <localMem> LM </localMem>
          <testerAcctId> TESTER_ACCT </testerAcctId>
       requires #range(LM, ARGSTART, ARGWIDTH) ==K #abiCallData("create_symbolic_uint256", .TypedArgs)
+      [priority(40)]
 
     //assume(bool)
     rule <k> CALL _ TESTER_ACCT 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
@@ -101,29 +104,15 @@ module EVM-SYMB-TESTING
          <localMem> LM </localMem>
          <testerAcctId> TESTER_ACCT </testerAcctId>
       requires #range(LM, ARGSTART, ARGWIDTH)[0 .. 4] ==K #signatureCallData("assume", #bool(?_), .TypedArgs)
+      [priority(40)]
 
     syntax Bool ::= Bytes2Bool( ByteArray ) [function]
     rule Bytes2Bool(#buf(32, 0)) => false
     rule Bytes2Bool(#buf(32, 1)) => true
     //todo lemma for actual symbolic form
 
-    syntax Set ::= "#customFunctionAbis" [function, functional]
-    rule #customFunctionAbis => SetItem(#signatureCallData("assume", #bool(0), .TypedArgs)) //Argument of #bool(?_) is not used.
-                                SetItem(#signatureCallData("new_ERC20_with_arbitrary_storage", .TypedArgs))
-                                SetItem(#signatureCallData("create_symbolic_address", .TypedArgs))
-                                SetItem(#signatureCallData("create_symbolic_uint256", .TypedArgs))
-
-    //todo temporary hack untin we get priorities working
-    rule <k> CALL GCAP ACCTTO VALUE ARGSTART ARGWIDTH RETSTART RETWIDTH
-          => #checkCall ACCTFROM VALUE
-          ~> #call ACCTFROM ACCTTO ACCTTO VALUE VALUE #range(LM, ARGSTART, ARGWIDTH) false
-          ~> #return RETSTART RETWIDTH
-         ...
-         </k>
-         <schedule> SCHED </schedule>
-         <id> ACCTFROM </id>
-         <localMem> LM </localMem>
-      requires notBool ( #range(LM, ARGSTART, ARGWIDTH)[0 .. 4] in #customFunctionAbis )
+    //Hack to disable gas computation
+    rule <k> #gas [ OP , AOP ] => . ...</k> [priority(40)]
 
     syntax EthereumCommand ::= "#assume" Bool
     rule <k> #assume B => . ...</k>
