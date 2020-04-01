@@ -142,6 +142,7 @@ module EVM-SYMB-TESTING
     rule X #in .Set => false                                                               [simplification]
 
     //todo try rewriting in to #in
+    //Doesn't work: https://github.com/kframework/kore/issues/1725
     rule X in ((SetItem(A) REST:Set) #as S) => X ==K A orBool X in REST                    [simplification, symbolic(S)]
 
     //Possibly required, but after this issue: https://github.com/kframework/kore/issues/1672
