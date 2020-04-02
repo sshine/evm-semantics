@@ -106,6 +106,25 @@ module EVM-SYMB-TESTING
       requires #range(LM, ARGSTART, ARGWIDTH)[0 .. 4] ==K #signatureCallData("assume", #bool(?_), .TypedArgs)
       [priority(40)]
 
+    rule <k> #mkCall ACCTFROM ACCTTO ACCTCODE BYTES APPVALUE ARGS STATIC:Bool
+          => #initVM ~> #precompiled?(ACCTCODE, SCHED) ~> #execute
+         ...
+         </k>
+         <callDepth> CD => CD +Int 1 </callDepth>
+         <callData> _ => ARGS </callData>
+         <callValue> _ => APPVALUE </callValue>
+         <id> _ => ACCTTO </id>
+         <gas> _ => GCALL </gas>
+         <callGas> GCALL => 0 </callGas>
+         <caller> _ => ACCTFROM </caller>
+         <program> _ => BYTES </program>
+         <jumpDests> _ => #computeValidJumpDests(BYTES) </jumpDests>
+         <static> OLDSTATIC:Bool => OLDSTATIC orBool STATIC </static>
+         //todo symb-test workaround, Set operations limitations.
+         //<touchedAccounts> ... .Set => SetItem(ACCTFROM) SetItem(ACCTTO) ... </touchedAccounts>
+         <schedule> SCHED </schedule>
+      [priority(40)]
+
     syntax Bool ::= Bytes2Bool( ByteArray ) [function]
     rule Bytes2Bool(#buf(32, 0)) => false
     rule Bytes2Bool(#buf(32, 1)) => true
