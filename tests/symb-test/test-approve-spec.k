@@ -50,26 +50,7 @@ module TEST-APPROVE-SPEC
 
         <gasPrice> _ </gasPrice>
         <origin> ORIGIN_ID </origin> // who fires tx
-
-        <blockhashes> _ </blockhashes>
-        <block>
-          <previousHash> _ </previousHash>
-          <ommersHash> _ </ommersHash>
-          <coinbase> _ </coinbase>
-          <stateRoot> _ </stateRoot>
-          <transactionsRoot> _ </transactionsRoot>
-          <receiptsRoot> _ </receiptsRoot>
-          <logsBloom> _ </logsBloom>
-          <difficulty> _ </difficulty>
-          <number> _ </number>
-          <gasLimit> _ </gasLimit>
-          <gasUsed> _ </gasUsed>
-          <timestamp> _ </timestamp>
-          <extraData> _ </extraData>
-          <mixHash> _ </mixHash>
-          <blockNonce> _ </blockNonce>
-          <ommerBlockHeaders> _ </ommerBlockHeaders>
-        </block>
+        ...
       </evm>
 
       <network>
