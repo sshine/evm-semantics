@@ -158,5 +158,8 @@ module EVM-SYMB-TESTING
     rule #notEq(_ ++ #buf(LEN , _), BA) => true
       requires #sizeByteArray(BA) <Int LEN       [simplification]
 
+    //todo workaround for Haskell limitation
+    rule [#lookup.hack]: #lookup( (KEY |-> VAL)  , KEY ) => VAL [simplification]
+
 endmodule
 ```
