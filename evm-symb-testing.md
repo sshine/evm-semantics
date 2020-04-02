@@ -55,7 +55,7 @@ module EVM-SYMB-TESTING
       andBool notBool ACCT ==K 0
 
     //Implementation of new_ERC20_with_arbitrary_storage() returns address
-    rule <k> CALL _ ACCTTO 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
+    rule <k> CALL _ TESTER_ACCT 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
           //~> #assume notBool ?ACCT in ActiveAccts //Will work once "in" for symbolic LHS gets implemented.
           => #assumeNotIn(?ACCT, ActiveAccts) //Works modulo issue: https://github.com/kframework/kore/issues/1637
           ~> #loadERC20Bytecode ?ACCT
@@ -64,36 +64,53 @@ module EVM-SYMB-TESTING
          </k>
          <output> _ => #buf(32, ?ACCT) </output>
          <localMem> LM </localMem>
-         <testerAcctId> ACCTTO </testerAcctId>
+         <testerAcctId> TESTER_ACCT </testerAcctId>
          <activeAccounts> ActiveAccts </activeAccounts>
       requires #range(LM, ARGSTART, ARGWIDTH) ==K #abiCallData("new_ERC20_with_arbitrary_storage", .TypedArgs)
 
     //Implementation of create_symbolic_address() returns address
-    rule <k> CALL _ ACCTTO 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
+    rule <k> CALL _ TESTER_ACCT 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
           => #assume #rangeAddress(?ACCT:Int)
           ~> 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?ACCT)
          ...
          </k>
          <output> _ => #buf(32, ?ACCT) </output>
          <localMem> LM </localMem>
-         <testerAcctId> ACCTTO </testerAcctId>
+         <testerAcctId> TESTER_ACCT </testerAcctId>
       requires #range(LM, ARGSTART, ARGWIDTH) ==K #abiCallData("create_symbolic_address", .TypedArgs)
 
     //Implementation of create_symbolic_uint256() returns address
-    rule <k> CALL _ ACCTTO 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
+    rule <k> CALL _ TESTER_ACCT 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
           => #assume #rangeUInt(256, ?SYMB_INT:Int)
           ~> 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?SYMB_INT)
          ...
          </k>
          <output> _ => #buf(32, ?SYMB_INT) </output>
          <localMem> LM </localMem>
-         <testerAcctId> ACCTTO </testerAcctId>
+         <testerAcctId> TESTER_ACCT </testerAcctId>
       requires #range(LM, ARGSTART, ARGWIDTH) ==K #abiCallData("create_symbolic_uint256", .TypedArgs)
 
+    //assume(bool)
+    rule <k> CALL _ TESTER_ACCT 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
+          => #assume Bytes2Bool( #range(LM, ARGSTART, ARGWIDTH)[4 .. 32] )
+          ~> 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH #buf(32, 0)
+         ...
+         </k>
+         <output> _ => #buf(32, 0) </output>
+         <localMem> LM </localMem>
+         <testerAcctId> TESTER_ACCT </testerAcctId>
+      requires #range(LM, ARGSTART, ARGWIDTH)[0 .. 4] ==K #signatureCallData("assume", #bool(?_), .TypedArgs)
+
+    syntax Bool ::= Bytes2Bool( ByteArray ) [function]
+    rule Bytes2Bool(#buf(32, 0)) => false
+    rule Bytes2Bool(#buf(32, 1)) => true
+    //fixme lemma for actual symbolic form
+
     syntax Set ::= "#customFunctionAbis" [function, functional]
-    rule #customFunctionAbis => SetItem(#abiCallData("new_ERC20_with_arbitrary_storage", .TypedArgs))
-                                SetItem(#abiCallData("create_symbolic_address", .TypedArgs))
-                                SetItem(#abiCallData("create_symbolic_uint256", .TypedArgs))
+    rule #customFunctionAbis => SetItem(#signatureCallData("assume", #bool(0), .TypedArgs)) //Argument of #bool(?_) is not used.
+                                SetItem(#signatureCallData("new_ERC20_with_arbitrary_storage", .TypedArgs))
+                                SetItem(#signatureCallData("create_symbolic_address", .TypedArgs))
+                                SetItem(#signatureCallData("create_symbolic_uint256", .TypedArgs))
 
     //todo temporary hack untin we get priorities working
     rule <k> CALL GCAP ACCTTO VALUE ARGSTART ARGWIDTH RETSTART RETWIDTH
@@ -107,7 +124,7 @@ module EVM-SYMB-TESTING
          <localMem> LM </localMem>
       //todo not evaluated because of https://github.com/kframework/kore/issues/1672
       //requires notBool ( #range(LM, ARGSTART, ARGWIDTH) #in #customFunctionAbis )
-      requires #notInByteArrayList(#range(LM, ARGSTART, ARGWIDTH), Set2List(#customFunctionAbis) )
+      requires #notInByteArrayList(#range(LM, ARGSTART, ARGWIDTH)[0 .. 4], Set2List(#customFunctionAbis) )
 
     syntax EthereumCommand ::= "#assume" Bool
     rule <k> #assume B => . ...</k>
