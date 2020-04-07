@@ -68,30 +68,31 @@ module EVM-SYMB-TESTING
          <testerAcctId> TESTER_ACCT </testerAcctId>
          <activeAccounts> ActiveAccts </activeAccounts>
       requires #range(LM, ARGSTART, ARGWIDTH) ==K #abiCallData("new_ERC20_with_arbitrary_storage", .TypedArgs)
+      ensures #rangeAddress(?ACCT)
       [priority(40)] //Higher than normal
 
     //Implementation of create_symbolic_address() returns address
     rule <k> CALL _ TESTER_ACCT 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
-          => #assume #rangeAddress(?ACCT:Int)
-          ~> 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?ACCT)
+          => 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?ACCT)
          ...
          </k>
          <output> _ => #buf(32, ?ACCT) </output>
          <localMem> LM </localMem>
          <testerAcctId> TESTER_ACCT </testerAcctId>
       requires #range(LM, ARGSTART, ARGWIDTH) ==K #abiCallData("create_symbolic_address", .TypedArgs)
+      ensures #rangeAddress(?ACCT)
       [priority(40)]
 
     //Implementation of create_symbolic_uint256() returns address
     rule <k> CALL _ TESTER_ACCT 0 ARGSTART ARGWIDTH RETSTART RETWIDTH
-          => #assume #rangeUInt(256, ?SYMB_INT:Int)
-          ~> 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?SYMB_INT)
+          => 1 ~> #push ~> #setLocalMem RETSTART RETWIDTH #buf(32, ?SYMB_INT)
          ...
          </k>
-         <output> _ => #buf(32, ?SYMB_INT) </output>
+         <output> _ => #buf(32, ?SYMB_INT:Int) </output>
          <localMem> LM </localMem>
          <testerAcctId> TESTER_ACCT </testerAcctId>
       requires #range(LM, ARGSTART, ARGWIDTH) ==K #abiCallData("create_symbolic_uint256", .TypedArgs)
+      ensures #rangeUInt(256, ?SYMB_INT)
       [priority(40)]
 
     //assume(bool)
